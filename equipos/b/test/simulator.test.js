@@ -21,9 +21,22 @@ test('proveedor simulado respeta identidad, acceso interno y snapshot', async ()
     const path='/internal/v1/accounts/'+claims.sub+'/access';
     assert.equal((await get(path)).status,401); assert.equal((await get(path,'Bearer wrong')).status,401);
     assert.equal((await (await get(path,'Bearer '+token)).json()).status,'ACTIVA');
+    const suspendedId='22222222-2222-4222-8222-222222222222';
+    const suspendedToken=(await (await get('/dev/token?as=suspended')).json()).access_token;
+    assert.equal((await get('/api/v1/quizzes?status=PUBLICADO','Bearer '+suspendedToken)).status,401);
+    const access=await (await get('/internal/v1/accounts/'+suspendedId+'/access','Bearer '+token)).json();
+    assert.deepEqual(access,{user_id:suspendedId,status:'SUSPENDIDA',roles:['DOCENTE']});
+    assert.equal((await get('/internal/v1/accounts/44444444-4444-4444-8444-444444444444/access','Bearer '+token)).status,404);
     const snapshot='/internal/v1/quizzes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/published-snapshot?owner_id='+claims.sub;
-    const body=await (await get(snapshot,'Bearer '+token)).json(); assert.deepEqual(body.questions.map(q=>q.type),['SINGLE_CHOICE','TRUE_FALSE','MULTIPLE_CHOICE','MATCHING','SHORT_ANSWER']);
+    assert.equal((await get(snapshot)).status,401);
+    assert.equal((await get(snapshot,'Bearer incorrect')).status,401);
+    const privateQuiz=snapshot.replace('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','cccccccc-cccc-4ccc-8ccc-cccccccccccc');
+    assert.equal((await get(privateQuiz,'Bearer '+token)).status,404);
+    const body=await (await get(snapshot,'Bearer '+token)).json();
+    assert.equal(body.owner_id,claims.sub);
+    assert.deepEqual(body.questions.map(q=>q.order),[1,2,3,4,5]);
+    assert.deepEqual(body.questions.map(q=>q.type),['SINGLE_CHOICE','TRUE_FALSE','MULTIPLE_CHOICE','MATCHING','SHORT_ANSWER']);
     assert.equal((await get(snapshot.replace(claims.sub,'22222222-2222-4222-8222-222222222222'),'Bearer '+token)).status,404);
   } finally { child.kill(); }
 });
-test('simulador rechaza producción', async()=>{ const child=spawn(process.execPath,['simulator/server.js'],{env:{...process.env,NODE_ENV:'production',ALLOW_DEV_SIMULATOR:'true',SERVICE_TOKEN:token},stdio:'ignore'}); const code=await new Promise(resolve=>child.on('exit',resolve)); assert.notEqual(code,0); });
+for (const mode of ['production','staging']) test(`simulador rechaza ${mode}`, async()=>{ const child=spawn(process.execPath,['simulator/server.js'],{env:{...process.env,NODE_ENV:mode,ALLOW_DEV_SIMULATOR:'true',SERVICE_TOKEN:token},stdio:'ignore'}); const code=await new Promise(resolve=>child.on('exit',resolve)); assert.notEqual(code,0); });
