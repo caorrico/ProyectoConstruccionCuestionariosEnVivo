@@ -26,3 +26,5 @@ Actualización: a petición del usuario se creó y publicó main como rama base 
 - La prueba transaccional `test/m3_integrity.sql` comprobó PIN activo duplicado, invalidación del PIN al terminar, apodo duplicado sin distinguir mayúsculas, participante de otra partida y respuesta duplicada. Ejecutar desde la raíz con PostgreSQL iniciado: `Get-Content -Raw equipos/b/test/m3_integrity.sql | docker exec -i cuestionarios-b-postgres-1 psql -v ON_ERROR_STOP=1 -U m3 -d m3`. La transacción termina con ROLLBACK.
 - Se ejecutó de nuevo el migrador de cada servicio en su contenedor; las tres bases conservaron una sola migración registrada. `npm run check` local no se completó porque las dependencias locales no están instaladas; se ejecutaron las pruebas del simulador directamente con Node.
 - La consulta de GitHub por `gh` respondió HTTP 401 en esta ejecución. El estado remoto anterior debe verificarse al recuperar autenticación.
+
+Actualización: la autenticación de GitHub funcionó al usar las credenciales del equipo; el PR #1 ya fue integrado en main. Estas pruebas se trasladaron a equipo-b/b1-verificacion desde la versión sincronizada de main para revisión independiente.
