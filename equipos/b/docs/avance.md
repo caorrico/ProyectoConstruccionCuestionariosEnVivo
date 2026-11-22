@@ -17,3 +17,5 @@ Se inició Docker Desktop. PostgreSQL creó las tres bases con propietarios sepa
 El remoto sigue vacío, sin rama base para un PR. GitHub ahora tiene autenticación activa; no se publicó la rama porque al ser el primer push se convertiría en la predeterminada y el encargo prohíbe empujar a ella. El frontend, las funciones de juego y la demo completa están pendientes.
 
 La composición se construyó y arrancó con PostgreSQL, simulador y M3–M5. Los registros muestran aplicada una migración por servicio y los tres controles /health respondieron 200. El volumen fue inicializado antes de añadir las restricciones CONNECT; estas se aplicaron y verificaron también en el volumen existente. La guía de arranque usa .env.example: no usar esos secretos fuera de desarrollo.
+
+Actualización: a petición del usuario se creó y publicó main como rama base con un commit inicial vacío; equipo-b/b1 se publicó por separado para revisión. Las referencias anteriores a la falta de rama base describen el estado previo.
