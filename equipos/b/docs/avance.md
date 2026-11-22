@@ -19,3 +19,10 @@ El remoto sigue vacío, sin rama base para un PR. GitHub ahora tiene autenticaci
 La composición se construyó y arrancó con PostgreSQL, simulador y M3–M5. Los registros muestran aplicada una migración por servicio y los tres controles /health respondieron 200. El volumen fue inicializado antes de añadir las restricciones CONNECT; estas se aplicaron y verificaron también en el volumen existente. La guía de arranque usa .env.example: no usar esos secretos fuera de desarrollo.
 
 Actualización: a petición del usuario se creó y publicó main como rama base con un commit inicial vacío; equipo-b/b1 se publicó por separado para revisión. Las referencias anteriores a la falta de rama base describen el estado previo.
+
+## Verificación adicional B1
+
+- `node --test test/simulator.test.js`: 3 pruebas aprobadas, con cuenta suspendida, credencial de servicio inválida, cuestionario no disponible, orden del snapshot y rechazo de staging y producción. El identificador de cuestionario privado usado en la prueba representa uno no disponible; aún falta una fixture explícita de cuestionario privado y la prueba del consumidor real.
+- La prueba transaccional `test/m3_integrity.sql` comprobó PIN activo duplicado, invalidación del PIN al terminar, apodo duplicado sin distinguir mayúsculas, participante de otra partida y respuesta duplicada. Ejecutar desde la raíz con PostgreSQL iniciado: `Get-Content -Raw equipos/b/test/m3_integrity.sql | docker exec -i cuestionarios-b-postgres-1 psql -v ON_ERROR_STOP=1 -U m3 -d m3`. La transacción termina con ROLLBACK.
+- Se ejecutó de nuevo el migrador de cada servicio en su contenedor; las tres bases conservaron una sola migración registrada. `npm run check` local no se completó porque las dependencias locales no están instaladas; se ejecutaron las pruebas del simulador directamente con Node.
+- La consulta de GitHub por `gh` respondió HTTP 401 en esta ejecución. El estado remoto anterior debe verificarse al recuperar autenticación.
