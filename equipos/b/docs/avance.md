@@ -19,3 +19,11 @@ El remoto sigue vacío, sin rama base para un PR. GitHub ahora tiene autenticaci
 La composición se construyó y arrancó con PostgreSQL, simulador y M3–M5. Los registros muestran aplicada una migración por servicio y los tres controles /health respondieron 200. El volumen fue inicializado antes de añadir las restricciones CONNECT; estas se aplicaron y verificaron también en el volumen existente. La guía de arranque usa .env.example: no usar esos secretos fuera de desarrollo.
 
 Actualización: a petición del usuario se creó y publicó main como rama base con un commit inicial vacío; equipo-b/b1 se publicó por separado para revisión. Las referencias anteriores a la falta de rama base describen el estado previo.
+
+## B2 — inicio en equipo-b/b2
+
+Se prepararon piezas internas para verificar JWT RS256 contra JWKS y confirmar estado y rol efectivo, validar el snapshot de los cinco tipos, construir una proyección pública sin respuestas correctas y crear salas con PIN aleatorio. La entrada serializa sobre la fila de partida, aplica máximo de 30, apodos únicos y una lista inicial limitada de palabras, y guarda solo el hash del token de participante. La migración 002 añade el hash; los tokens y reconexión todavía no están conectados a rutas.
+
+Validado: `npm run check` (compilación y 5 pruebas); `TEST_DATABASE_URL=... node --test test/rooms.integration.js` contra PostgreSQL local (35 ingresos simultáneos, 30 admitidos, colisión de apodos, cierre de sala y hashes). La prueba elimina solamente las partidas que crea. Se aplicó la migración 002 localmente. El PR #2 de pruebas B1 seguía abierto al iniciar B2 y no es una dependencia funcional.
+
+Pendiente: conectar identidad y snapshot reales a rutas con autorización, sesiones y reconexión; endpoints y WebSocket, moderación, reloj y rondas, respuestas, interfaz, pruebas de navegador y ampliación del filtro. Las funciones actuales son módulos internos y todavía no constituyen una partida jugable. No se ha probado p95 ni integración con A.
