@@ -15,9 +15,32 @@ export function pendingFiles(dir: string, applied: Set<string>): string[] {
     .filter(name => !applied.has(name));
 }
 
-async function applied(client: PoolClient): Promise<Set<string>> {
+type Queryable = Pick<PoolClient, 'query'>;
+
+async function applied(client: Queryable): Promise<Set<string>> {
   const { rows } = await client.query<{ version: string }>('SELECT version FROM schema_migrations');
   return new Set(rows.map(row => row.version));
+}
+
+// Aplica en orden los archivos pendientes; si uno falla, se revierte solo ese y se detiene.
+export async function applyMigrations(client: Queryable, dir: string, label: string): Promise<string[]> {
+  await client.query(
+    'CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())',
+  );
+  const done: string[] = [];
+  for (const file of pendingFiles(dir, await applied(client))) {
+    await client.query('BEGIN');
+    try {
+      await client.query(readFileSync(join(dir, file), 'utf8'));
+      await client.query('INSERT INTO schema_migrations(version) VALUES ($1)', [file]);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw new Error(`Falló ${label}/${file}: ${(error as Error).message}`);
+    }
+    done.push(file);
+  }
+  return done;
 }
 
 async function main() {
@@ -29,22 +52,8 @@ async function main() {
   const client = await pool.connect();
   try {
     await client.query('SELECT pg_advisory_lock($1)', [LOCK_ID]);
-    await client.query(
-      'CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())',
-    );
     const dir = join(process.cwd(), 'migrations', service!);
-    for (const file of pendingFiles(dir, await applied(client))) {
-      await client.query('BEGIN');
-      try {
-        await client.query(readFileSync(join(dir, file), 'utf8'));
-        await client.query('INSERT INTO schema_migrations(version) VALUES ($1)', [file]);
-        await client.query('COMMIT');
-      } catch (error) {
-        await client.query('ROLLBACK');
-        throw new Error(`Falló ${service}/${file}: ${(error as Error).message}`);
-      }
-      console.log(`Aplicada ${service}/${file}`);
-    }
+    for (const file of await applyMigrations(client, dir, service!)) console.log(`Aplicada ${service}/${file}`);
     // La semilla corre bajo el mismo bloqueo para que dos réplicas no la dupliquen.
     if (service === 'm1' && seedEnabled(process.env)) {
       const created = await seed(client, seedUsers(process.env));
