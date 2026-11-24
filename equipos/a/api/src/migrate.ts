@@ -1,6 +1,7 @@
 import { Pool, PoolClient } from 'pg';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { seed, seedEnabled, seedUsers } from './seed';
 
 // Ejecutor de migraciones SQL por servicio. Cada archivo se aplica una sola vez,
 // dentro de una transacción, y queda registrado en schema_migrations.
@@ -43,6 +44,11 @@ async function main() {
         throw new Error(`Falló ${service}/${file}: ${(error as Error).message}`);
       }
       console.log(`Aplicada ${service}/${file}`);
+    }
+    // La semilla corre bajo el mismo bloqueo para que dos réplicas no la dupliquen.
+    if (service === 'm1' && seedEnabled(process.env)) {
+      const created = await seed(client, seedUsers(process.env));
+      console.log(created.length ? `Semilla creada: ${created.join(', ')}` : 'Semilla ya presente');
     }
   } finally {
     await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]).catch(() => undefined);
