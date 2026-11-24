@@ -1,0 +1,34 @@
+# Avance del equipo A
+
+## Corte A1 — infraestructura (rama `equipo-a/a1`)
+
+- [x] build(a): preparar infraestructura local de M1 y M2
+- [x] feat(a): migraciones de cuentas con roles y estados
+- [x] feat(a): esquema de cuestionarios y versiones publicadas
+- [x] feat(a): datos semilla con administrador y docente de prueba — `src/seed.ts` crea admin y docente activos con argon2id si `SEED_DEMO=true`; idempotente y bajo el bloqueo de migración. Verificado: `npm run build` y `npm test` (6 pruebas con cliente simulado). No se probó contra PostgreSQL real: no había Docker en la máquina de desarrollo.
+- [x] test(a): pruebas del ejecutor de migraciones y del esquema — `applyMigrations` extraído de `main()` y probado con cliente simulado (orden, registro, rollback); `schema.test.js` valida restricciones de M1 y M2 en un esquema temporal revertido. Verificado: `npm run build` y `npm test` (11 pasan, 2 omitidas por no haber `DATABASE_URL`/Docker). Matriz en `docs/trazabilidad.md`.
+
+### Texto sugerido para el PR de A1
+
+**Título:** Equipo A — corte A1: infraestructura, esquemas y semilla de M1 y M2
+
+**Descripción:**
+
+Prepara la base de los módulos M1 (Cuentas y acceso) y M2 (Cuestionarios) del equipo A.
+
+- `compose.yml` con PostgreSQL 16 (`127.0.0.1:5541`), Mailpit y los servicios `m1` y `m2`; bases separadas y sin acceso cruzado (`db/init.sh`).
+- API NestJS con `/health` por servicio y ejecutor de migraciones transaccional con bloqueo consultivo.
+- M1: personas, roles, usuarios con estados `SIN_VERIFICAR | PENDIENTE | ACTIVA | RECHAZADA | SUSPENDIDA`, campos de bloqueo (RN-04) y trigger de dominio `@espe.edu.ec` para docentes (RN-01).
+- M2: cuestionarios (`BORRADOR | PUBLICADO | ARCHIVADO`), preguntas de los cinco tipos v1 con límites de RN-05 y versiones publicadas inmutables.
+- Semilla opcional (`SEED_DEMO=true`) con administrador y docente activo, contraseñas argon2id, idempotente.
+- Pruebas con `node --test`: ejecutor de migraciones, semilla y esquema (este último requiere `DATABASE_URL`).
+
+**Cómo probar:** `cd equipos/a/api && npm ci && npm run build && npm test`. Con Docker: `docker compose -f equipos/a/compose.yml up -d` y repetir con `DATABASE_URL` apuntando a `m1` y a `m2`.
+
+**Pendiente conocido:** las pruebas de esquema no se ejecutaron contra PostgreSQL real porque la máquina de desarrollo no tiene Docker; conviene correrlas en la revisión.
+
+Requisitos: RF-01, RF-02, RF-03, RF-04, RN-01, RN-02, RN-03, RN-05.
+
+## Pedidos para el equipo B
+
+Ninguno por ahora.

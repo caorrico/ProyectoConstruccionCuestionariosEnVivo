@@ -21,3 +21,7 @@ docker compose --env-file .env -f compose.yml up --build
 | Mailpit UI | `http://127.0.0.1:8025`  |
 
 Las variables de `.env.example` son solo para desarrollo local; no usarlas en staging ni producción. `docker compose down` conserva el volumen `a-postgres`.
+
+## Datos semilla
+
+Con `SEED_DEMO=true`, M1 crea tras migrar dos cuentas activas: `admin@espe.edu.ec` (ADMINISTRADOR) y `docente@espe.edu.ec` (DOCENTE). Las contraseñas salen de `SEED_ADMIN_PASSWORD` y `SEED_DOCENTE_PASSWORD`, deben cumplir RN-02 y se guardan con argon2id. La semilla es idempotente: si la cuenta ya existe no se modifica. Fuera de desarrollo, dejar `SEED_DEMO=false`.
