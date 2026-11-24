@@ -20,10 +20,11 @@ La composición se construyó y arrancó con PostgreSQL, simulador y M3–M5. Lo
 
 Actualización: a petición del usuario se creó y publicó main como rama base con un commit inicial vacío; equipo-b/b1 se publicó por separado para revisión. Las referencias anteriores a la falta de rama base describen el estado previo.
 
-## B2 — inicio en equipo-b/b2
+## Verificación adicional B1
 
-Se prepararon piezas internas para verificar JWT RS256 contra JWKS y confirmar estado y rol efectivo, validar el snapshot de los cinco tipos, construir una proyección pública sin respuestas correctas y crear salas con PIN aleatorio. La entrada serializa sobre la fila de partida, aplica máximo de 30, apodos únicos y una lista inicial limitada de palabras, y guarda solo el hash del token de participante. La migración 002 añade el hash; los tokens y reconexión todavía no están conectados a rutas.
+- `node --test test/simulator.test.js`: 3 pruebas aprobadas, con cuenta suspendida, credencial de servicio inválida, cuestionario no disponible, orden del snapshot y rechazo de staging y producción. El identificador de cuestionario privado usado en la prueba representa uno no disponible; aún falta una fixture explícita de cuestionario privado y la prueba del consumidor real.
+- La prueba transaccional `test/m3_integrity.sql` comprobó PIN activo duplicado, invalidación del PIN al terminar, apodo duplicado sin distinguir mayúsculas, participante de otra partida y respuesta duplicada. Ejecutar desde la raíz con PostgreSQL iniciado: `Get-Content -Raw equipos/b/test/m3_integrity.sql | docker exec -i cuestionarios-b-postgres-1 psql -v ON_ERROR_STOP=1 -U m3 -d m3`. La transacción termina con ROLLBACK.
+- Se ejecutó de nuevo el migrador de cada servicio en su contenedor; las tres bases conservaron una sola migración registrada. `npm run check` local no se completó porque las dependencias locales no están instaladas; se ejecutaron las pruebas del simulador directamente con Node.
+- La consulta de GitHub por `gh` respondió HTTP 401 en esta ejecución. El estado remoto anterior debe verificarse al recuperar autenticación.
 
-Validado: `npm run check` (compilación y 5 pruebas); `TEST_DATABASE_URL=... node --test test/rooms.integration.js` contra PostgreSQL local (35 ingresos simultáneos, 30 admitidos, colisión de apodos, cierre de sala y hashes). La prueba elimina solamente las partidas que crea. Se aplicó la migración 002 localmente. El PR #2 de pruebas B1 seguía abierto al iniciar B2 y no es una dependencia funcional.
-
-Pendiente: conectar identidad y snapshot reales a rutas con autorización, sesiones y reconexión; endpoints y WebSocket, moderación, reloj y rondas, respuestas, interfaz, pruebas de navegador y ampliación del filtro. Las funciones actuales son módulos internos y todavía no constituyen una partida jugable. No se ha probado p95 ni integración con A.
+Actualización: la autenticación de GitHub funcionó al usar las credenciales del equipo; el PR #1 ya fue integrado en main. Estas pruebas se trasladaron a equipo-b/b1-verificacion desde la versión sincronizada de main para revisión independiente.
