@@ -29,6 +29,10 @@ Prepara la base de los módulos M1 (Cuentas y acceso) y M2 (Cuestionarios) del e
 
 Requisitos: RF-01, RF-02, RF-03, RF-04, RN-01, RN-02, RN-03, RN-05.
 
+## Corte A2 — cuentas (rama `equipo-a/a2`)
+
+- [x] feat(a): registro de docentes con validación de dominio y contraseña — módulo `cuentas` en M1 con `POST /api/v1/auth/register` (`class-validator`, errores en español por campo, 409 si el correo existe); la cuenta queda `SIN_VERIFICAR` con rol `DOCENTE` y hash argon2id. `buildApp` separado de `main.ts` para probar la API sin red. Verificado: `npm run build` y `npm test` (17 pasan, 2 omitidas sin `DATABASE_URL`), con pool simulado; no se probó contra PostgreSQL real.
+
 ## Pedidos para el equipo B
 
 Ninguno por ahora.

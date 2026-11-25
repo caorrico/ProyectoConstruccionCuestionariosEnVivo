@@ -1,5 +1,5 @@
-import { hash } from 'argon2';
 import type { ClientBase } from 'pg';
+import { hashPassword, passwordIssue } from './cuentas/reglas';
 
 // Datos semilla de demostración para M1: un administrador y un docente activo.
 // Solo se ejecutan si SEED_DEMO=true y nunca sobrescriben cuentas existentes.
@@ -14,13 +14,7 @@ export interface SeedUser {
 type Env = Record<string, string | undefined>;
 type Hasher = (password: string) => Promise<string>;
 
-// RN-02: mínimo 8 caracteres, al menos una mayúscula y un número.
-export function passwordIssue(password: string): string | null {
-  if (password.length < 8) return 'debe tener al menos 8 caracteres';
-  if (!/[A-ZÑ]/.test(password)) return 'debe incluir una letra mayúscula';
-  if (!/[0-9]/.test(password)) return 'debe incluir un número';
-  return null;
-}
+export { hashPassword, passwordIssue };
 
 export function seedEnabled(env: Env): boolean {
   return env.SEED_DEMO === 'true';
@@ -51,8 +45,6 @@ export function seedUsers(env: Env): SeedUser[] {
   }
   return users;
 }
-
-export const hashPassword: Hasher = password => hash(password, { type: 2 /* argon2id */ });
 
 // Crea las cuentas que falten dentro de una transacción. Devuelve los correos creados.
 export async function seed(client: ClientBase, users: SeedUser[], hasher: Hasher = hashPassword): Promise<string[]> {
