@@ -29,6 +29,10 @@ services:
       SEED_DEMO: ${SEED_DEMO:-false}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       SEED_DOCENTE_PASSWORD: ${SEED_DOCENTE_PASSWORD:-}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:3001}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-cuestionarios-a,cuestionarios-b}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     command: ["sh", "-c", "node dist/migrate.js && node dist/main.js"]
     depends_on:
       postgres: {condition: service_healthy}

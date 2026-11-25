@@ -67,3 +67,11 @@ export class ReenvioDto {
   @IsString({ message: 'El correo es obligatorio' })
   correo!: string;
 }
+
+// POST /api/v1/auth/login (RF-03). No se revalida la política de contraseña: solo se compara.
+export class LoginDto extends ReenvioDto {
+  @MaxLength(128, { message: 'La contraseña admite hasta 128 caracteres' })
+  @IsNotEmpty({ message: 'La contraseña es obligatoria' })
+  @IsString({ message: 'La contraseña es obligatoria' })
+  contrasena!: string;
+}
