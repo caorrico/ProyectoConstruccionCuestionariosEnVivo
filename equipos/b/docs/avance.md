@@ -28,3 +28,13 @@ Actualización: a petición del usuario se creó y publicó main como rama base 
 - La consulta de GitHub por `gh` respondió HTTP 401 en esta ejecución. El estado remoto anterior debe verificarse al recuperar autenticación.
 
 Actualización: la autenticación de GitHub funcionó al usar las credenciales del equipo; el PR #1 ya fue integrado en main. Estas pruebas se trasladaron a equipo-b/b1-verificacion desde la versión sincronizada de main para revisión independiente.
+
+## B2 — apertura de rondas
+
+PR #3 integrado. En `equipo-b/b2-rondas` se añadió una operación interna que verifica rol y propiedad, bloquea la partida durante la transición, usa el reloj de PostgreSQL y devuelve únicamente la pregunta pública. `npm run check` pasó 6 pruebas; la prueba de integración `rounds.integration.js` verificó dos aperturas simultáneas, propietario incorrecto, duración y ausencia de la solución. Pendientes: conectar a rutas y autorización real, cierre automático, respuestas, WebSocket, reconexión, moderación e interfaz; no existe aún partida jugable.
+
+## B2 — recepción inicial de respuestas
+
+Se añadió una operación interna que autentica al participante por hash de token, comprueba pertenencia y expulsión, valida el formato de los cinco tipos y registra como máximo una respuesta en la ronda vigente. El reloj y las fechas de PostgreSQL determinan el plazo; envíos tardíos o repetidos se rechazan. La operación aún no está conectada a rutas ni WebSocket y requiere límites de peticiones y expiración de sesión antes de exponerse.
+
+Verificado: compilación TypeScript; prueba PostgreSQL de diez envíos simultáneos del mismo participante (uno aceptado), sesión inválida, respuesta booleana inválida y envío tardío. Los cinco formatos aún requieren pruebas de integración específicas; no se probó calificación, navegador ni carga p95.
