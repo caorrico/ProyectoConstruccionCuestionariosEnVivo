@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, MaxLength, ValidateBy } from 'class-validator';
+import { IsNotEmpty, IsString, Matches, MaxLength, ValidateBy } from 'class-validator';
 import { esCorreoDocente, normalizarCorreo, passwordIssue } from './reglas';
 
 const recortar = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
@@ -51,4 +51,19 @@ export class RegistroDto {
   @MaxLength(128, { message: 'La contraseña admite hasta 128 caracteres' })
   @EsContrasenaSegura()
   contrasena!: string;
+}
+
+// POST /api/v1/auth/verify: el token llega desde el enlace del correo.
+export class VerificacionDto {
+  @Matches(/^[A-Za-z0-9_-]{43}$/, { message: 'El enlace de verificación no es válido' })
+  @IsString({ message: 'El enlace de verificación no es válido' })
+  token!: string;
+}
+
+// POST /api/v1/auth/verification/resend
+export class ReenvioDto {
+  @Transform(({ value }) => (typeof value === 'string' ? normalizarCorreo(value) : value))
+  @MaxLength(254, { message: 'El correo admite hasta 254 caracteres' })
+  @IsString({ message: 'El correo es obligatorio' })
+  correo!: string;
 }

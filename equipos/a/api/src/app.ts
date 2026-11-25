@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { Pool } from 'pg';
+import { CorreoModule, Mailer, mailerDesdeEntorno } from './correo';
 import { CuentasModule } from './cuentas/cuentas.module';
 import { DatabaseModule, PG_POOL } from './database';
 
@@ -44,11 +45,15 @@ export function erroresPorCampo(errors: ValidationError[]): BadRequestException 
   return new BadRequestException({ statusCode: 400, message: 'Revisa los datos enviados', errors: campos });
 }
 
-export async function buildApp(service: Servicio, pool: Pick<Pool, 'query' | 'connect'>): Promise<INestApplication> {
+export async function buildApp(
+  service: Servicio,
+  pool: Pick<Pool, 'query' | 'connect'>,
+  mailer: Mailer = mailerDesdeEntorno(),
+): Promise<INestApplication> {
   const app = await NestFactory.create(
     {
       module: AppModule,
-      imports: [DatabaseModule.forPool(pool), ...(service === 'm1' ? [CuentasModule] : [])],
+      imports: [DatabaseModule.forPool(pool), CorreoModule.forMailer(mailer), ...(service === 'm1' ? [CuentasModule] : [])],
       controllers: [HealthController],
       providers: [{ provide: SERVICE_NAME, useValue: service }],
     },

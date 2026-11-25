@@ -6,7 +6,8 @@ Estado: **Implementado** (hay código y prueba automática), **Parcial** (solo e
 
 | Requisito | Implementación | Prueba | Estado |
 |---|---|---|---|
-| RF-01 / RN-01 dominio `@espe.edu.ec` para docentes | `api/src/cuentas/reglas.ts` (`esCorreoDocente`), `registro.dto.ts`; trigger `usuario_roles_dominio` en `001_cuentas.sql` | `api/test/registro.test.js`, `api/test/schema.test.js` (M1) | Parcial: falta verificación de correo (A2) |
+| RF-01 / RN-01 dominio `@espe.edu.ec` para docentes | `api/src/cuentas/reglas.ts` (`esCorreoDocente`), `registro.dto.ts`; trigger `usuario_roles_dominio` en `001_cuentas.sql` | `api/test/registro.test.js`, `api/test/schema.test.js` (M1) | Implementado |
+| RF-01 verificación de correo de un solo uso (24 h) y reenvío | `api/migrations/m1/002_tokens.sql`, `api/src/cuentas/tokens.ts`, `cuentas.service.ts` (`verificar`, `reenviarVerificacion`), `api/src/correo.ts` | `api/test/verificacion.test.js` | Implementado |
 | RF-01 / RN-02 contraseña ≥ 8, mayúscula y número | `api/src/cuentas/reglas.ts` (`passwordIssue`), `registro.dto.ts` | `api/test/registro.test.js`, `api/test/seed.test.js` | Implementado |
 | RF-01 registro `POST /api/v1/auth/register` | `api/src/cuentas/cuentas.module.ts`, `cuentas.service.ts` | `api/test/registro.test.js` | Implementado |
 | RF-02 / RN-03 estados de cuenta | `api/migrations/m1/001_cuentas.sql` (`usuarios.estado`, `verificado_en`) | `api/test/schema.test.js` (M1) | Parcial: falta gestión administrativa (A2) |

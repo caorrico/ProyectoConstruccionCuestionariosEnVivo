@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, Module, Post } from '@nestjs/common';
 import { CuentasService } from './cuentas.service';
-import { RegistroDto } from './registro.dto';
+import { ReenvioDto, RegistroDto, VerificacionDto } from './registro.dto';
 
 @Controller('api/v1/auth')
 export class CuentasController {
@@ -11,6 +11,18 @@ export class CuentasController {
   @HttpCode(201)
   registrar(@Body() dto: RegistroDto) {
     return this.cuentas.registrar(dto);
+  }
+
+  @Post('verify')
+  @HttpCode(200)
+  verificar(@Body() dto: VerificacionDto) {
+    return this.cuentas.verificar(dto.token);
+  }
+
+  @Post('verification/resend')
+  @HttpCode(202)
+  reenviar(@Body() dto: ReenvioDto) {
+    return this.cuentas.reenviarVerificacion(dto.correo);
   }
 }
 

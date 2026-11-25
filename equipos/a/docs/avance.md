@@ -32,6 +32,7 @@ Requisitos: RF-01, RF-02, RF-03, RF-04, RN-01, RN-02, RN-03, RN-05.
 ## Corte A2 — cuentas (rama `equipo-a/a2`)
 
 - [x] feat(a): registro de docentes con validación de dominio y contraseña — módulo `cuentas` en M1 con `POST /api/v1/auth/register` (`class-validator`, errores en español por campo, 409 si el correo existe); la cuenta queda `SIN_VERIFICAR` con rol `DOCENTE` y hash argon2id. `buildApp` separado de `main.ts` para probar la API sin red. Verificado: `npm run build` y `npm test` (17 pasan, 2 omitidas sin `DATABASE_URL`), con pool simulado; no se probó contra PostgreSQL real.
+- [x] feat(a): verificación de correo con enlace de un solo uso — migración `002_tokens.sql` (hash SHA-256, propósito, expiración), `POST /api/v1/auth/verify` (cuenta → `PENDIENTE`) y `POST /api/v1/auth/verification/resend` (invalida el enlace anterior y responde igual exista o no la cuenta). Correo con `nodemailer` a `SMTP_URL` (Mailpit); enlace con `APP_BASE_URL`. Verificado: `npm run build` y `npm test` (21 pasan, 2 omitidas sin `DATABASE_URL`) con pool y correo en memoria; no se probó contra PostgreSQL ni Mailpit reales.
 
 ## Pedidos para el equipo B
 

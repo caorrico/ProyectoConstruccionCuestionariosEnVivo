@@ -25,6 +25,7 @@ services:
       SERVICE_NAME: m1
       DATABASE_URL: postgres://m1:${m1_PASSWORD}@postgres:5432/m1
       SMTP_URL: smtp://mailpit:1025
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3100}
       SEED_DEMO: ${SEED_DEMO:-false}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       SEED_DOCENTE_PASSWORD: ${SEED_DOCENTE_PASSWORD:-}
