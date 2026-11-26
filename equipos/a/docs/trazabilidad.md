@@ -12,7 +12,8 @@ Estado: **Implementado** (hay código y prueba automática), **Parcial** (solo e
 | RF-01 registro `POST /api/v1/auth/register` | `api/src/cuentas/cuentas.module.ts`, `cuentas.service.ts` | `api/test/registro.test.js` | Implementado |
 | RF-02 / RN-03 estados de cuenta | `api/migrations/m1/001_cuentas.sql` (`usuarios.estado`, `verificado_en`) | `api/test/schema.test.js` (M1) | Parcial: falta gestión administrativa (A2) |
 | RF-03 inicio de sesión, JWT RS256 en cookie HttpOnly y JWKS | `api/src/cuentas/jwt.ts`, `sesion.service.ts`, `cuentas.module.ts` (`login`, `logout`, `jwks`) | `api/test/sesion.test.js` | Implementado |
-| RF-03 / RN-04 bloqueo e invalidación de sesiones | `api/migrations/m1/001_cuentas.sql` (`intentos_fallidos`, `bloqueado_hasta`, `version_sesion`) | — | Pendiente (A2) |
+| RF-03 / RN-04 bloqueo de 15 min tras 5 fallos seguidos, independiente del estado | `api/src/cuentas/sesion.service.ts` (`registrarFallo`, `MAX_INTENTOS`, `BLOQUEO_MS`), `api/src/reloj.ts`; columnas `intentos_fallidos`, `bloqueado_hasta` | `api/test/bloqueo.test.js` | Implementado |
+| RF-03 / RN-04 invalidación de sesiones (`version_sesion`) | `api/migrations/m1/001_cuentas.sql` (`version_sesion`), claim `sv` en `jwt.ts` | — | Pendiente (A2) |
 | RF-04 / RN-05 1–50 preguntas, 5–120 s, cinco tipos | `api/migrations/m2/001_cuestionarios.sql` (`preguntas`) | `api/test/schema.test.js` (M2) | Parcial: falta validación al publicar (A3) |
 | RF-04 versiones publicadas inmutables | `api/migrations/m2/001_cuestionarios.sql` (trigger `versiones_publicadas_inmutables`) | `api/test/schema.test.js` (M2) | Parcial: falta publicar (A3) |
 | RF-05 / RN-06 importación TXT, DOCX y PDF | — | — | Pendiente (A4) |

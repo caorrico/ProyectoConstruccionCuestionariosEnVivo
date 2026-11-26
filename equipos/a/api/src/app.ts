@@ -14,6 +14,7 @@ import type { Pool } from 'pg';
 import { CorreoModule, Mailer, mailerDesdeEntorno } from './correo';
 import { CuentasModule } from './cuentas/cuentas.module';
 import { DatabaseModule, PG_POOL } from './database';
+import { Reloj, RelojModule, relojSistema } from './reloj';
 
 export type Servicio = 'm1' | 'm2';
 const SERVICE_NAME = Symbol('SERVICE_NAME');
@@ -49,11 +50,17 @@ export async function buildApp(
   service: Servicio,
   pool: Pick<Pool, 'query' | 'connect'>,
   mailer: Mailer = mailerDesdeEntorno(),
+  reloj: Reloj = relojSistema,
 ): Promise<INestApplication> {
   const app = await NestFactory.create(
     {
       module: AppModule,
-      imports: [DatabaseModule.forPool(pool), CorreoModule.forMailer(mailer), ...(service === 'm1' ? [CuentasModule] : [])],
+      imports: [
+        DatabaseModule.forPool(pool),
+        CorreoModule.forMailer(mailer),
+        RelojModule.forReloj(reloj),
+        ...(service === 'm1' ? [CuentasModule] : []),
+      ],
       controllers: [HealthController],
       providers: [{ provide: SERVICE_NAME, useValue: service }],
     },
