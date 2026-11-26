@@ -83,6 +83,50 @@ export class CuentasService {
     return { message: 'Si la cuenta existe y no está verificada, enviamos un nuevo enlace' };
   }
 
+  // RF-03: enlace de recuperación de un solo uso, válido 1 h. Igual que el reenvío, la respuesta
+  // no revela si el correo está registrado. Emitir uno nuevo invalida el anterior.
+  async solicitarRecuperacion(correo: string) {
+    const { rows } = await this.pool.query<{ id: string; nombres: string }>(
+      `SELECT u.id, p.nombres FROM usuarios u JOIN personas p ON p.id = u.persona_id
+       WHERE u.correo = $1 AND u.estado <> 'SIN_VERIFICAR'`,
+      [correo],
+    );
+    if (rows[0]) {
+      const token = await emitirToken(this.pool, rows[0].id, 'RECUPERACION');
+      const enlace = `${this.baseUrl}/cuentas/restablecer?token=${token}`;
+      const texto = `Hola ${rows[0].nombres}:\n\nPara elegir una contraseña nueva usa este enlace (válido ${VIGENCIA_HORAS.RECUPERACION} hora, un solo uso):\n${enlace}\n\nSi no lo pediste, ignora este mensaje: tu contraseña no cambiará.`;
+      await this.mailer
+        .enviar({ para: correo, asunto: 'Recupera tu contraseña de Cuestionarios en Vivo', texto })
+        .catch(error => this.logger.error(`No se pudo enviar la recuperación: ${(error as Error).message}`));
+    }
+    return { message: 'Si la cuenta existe, enviamos un enlace para restablecer la contraseña' };
+  }
+
+  // Consumir el token, cambiar el hash e incrementar version_sesion ocurren en una sola sentencia:
+  // los JWT emitidos antes llevan el `sv` anterior y dejan de valer. El bloqueo de RN-04 no se levanta.
+  async restablecer(token: string, contrasena: string) {
+    const hashContrasena = await hashPassword(contrasena);
+    const { rows } = await this.pool.query<{ id: string; correo: string }>(
+      `WITH t AS (
+         UPDATE tokens SET usado_en = now()
+         WHERE hash_token = $1 AND proposito = 'RECUPERACION' AND usado_en IS NULL AND expira_en > now()
+         RETURNING usuario_id
+       )
+       UPDATE usuarios u SET hash_contrasena = $2, version_sesion = u.version_sesion + 1, actualizado_en = now()
+       FROM t WHERE u.id = t.usuario_id RETURNING u.id, u.correo`,
+      [hashToken(token), hashContrasena],
+    );
+    if (!rows[0]) throw new BadRequestException('El enlace de recuperación no es válido, ya se usó o expiró');
+    await this.mailer
+      .enviar({
+        para: rows[0].correo,
+        asunto: 'Tu contraseña de Cuestionarios en Vivo cambió',
+        texto: 'Tu contraseña se cambió y se cerraron las sesiones abiertas.\n\nSi no fuiste tú, solicita una recuperación de inmediato y avisa a un administrador.',
+      })
+      .catch(error => this.logger.error(`No se pudo avisar el cambio de contraseña: ${(error as Error).message}`));
+    return { user_id: rows[0].id, message: 'Contraseña actualizada. Inicia sesión con la nueva contraseña' };
+  }
+
   // Si el correo falla, la cuenta ya existe y el docente puede pedir el reenvío.
   private async enviarVerificacion(correo: string, nombres: string, token: string) {
     const enlace = `${this.baseUrl}/cuentas/verificar?token=${token}`;

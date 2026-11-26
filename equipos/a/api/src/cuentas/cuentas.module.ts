@@ -3,7 +3,7 @@ import { Body, Controller, Get, Header, HttpCode, Module, Post, Res } from '@nes
 import type { CookieOptions, Response } from 'express';
 import { CuentasService } from './cuentas.service';
 import { FIRMADOR, firmadorDesdeEntorno } from './jwt';
-import { LoginDto, ReenvioDto, RegistroDto, VerificacionDto } from './registro.dto';
+import { LoginDto, ReenvioDto, RegistroDto, RestablecerDto, VerificacionDto } from './registro.dto';
 import { SesionService } from './sesion.service';
 
 export const COOKIE_ACCESO = 'cv_acceso';
@@ -37,6 +37,23 @@ export class CuentasController {
   @HttpCode(202)
   reenviar(@Body() dto: ReenvioDto) {
     return this.cuentas.reenviarVerificacion(dto.correo);
+  }
+
+  // RF-03: recuperación de contraseña con enlace de un solo uso válido 1 h.
+  @Post('password/forgot')
+  @HttpCode(202)
+  olvide(@Body() dto: ReenvioDto) {
+    return this.cuentas.solicitarRecuperacion(dto.correo);
+  }
+
+  // Además de invalidar las sesiones por version_sesion, borra las cookies de este navegador.
+  @Post('password/reset')
+  @HttpCode(200)
+  async restablecer(@Body() dto: RestablecerDto, @Res({ passthrough: true }) res: Response) {
+    const resultado = await this.cuentas.restablecer(dto.token, dto.contrasena);
+    res.clearCookie(COOKIE_ACCESO, opciones(true));
+    res.clearCookie(COOKIE_CSRF, opciones(false));
+    return resultado;
   }
 
   // RF-03: el JWT viaja solo en la cookie HttpOnly; el cuerpo no lo expone a JavaScript.
