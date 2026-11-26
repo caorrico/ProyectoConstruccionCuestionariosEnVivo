@@ -68,6 +68,17 @@ export class ReenvioDto {
   correo!: string;
 }
 
+// POST /api/v1/auth/password/reset (RF-03): la nueva contraseña cumple la misma política de RN-02.
+export class RestablecerDto {
+  @Matches(/^[A-Za-z0-9_-]{43}$/, { message: 'El enlace de recuperación no es válido' })
+  @IsString({ message: 'El enlace de recuperación no es válido' })
+  token!: string;
+
+  @MaxLength(128, { message: 'La contraseña admite hasta 128 caracteres' })
+  @EsContrasenaSegura()
+  contrasena!: string;
+}
+
 // POST /api/v1/auth/login (RF-03). No se revalida la política de contraseña: solo se compara.
 export class LoginDto extends ReenvioDto {
   @MaxLength(128, { message: 'La contraseña admite hasta 128 caracteres' })
