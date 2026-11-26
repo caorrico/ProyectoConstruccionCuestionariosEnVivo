@@ -34,17 +34,17 @@ export function permiteSmtpSinTls(env: Entorno, host: string): boolean {
   return true;
 }
 
-// SMTP_URL apunta a Mailpit en desarrollo; sin SMTP_URL los mensajes se descartan.
 function transporteDesdeEntorno(env: Entorno) {
-  if (!env.SMTP_URL) return createTransport({ jsonTransport: true });
-  const opciones = opcionesSmtp(env);
-  if (permiteSmtpSinTls(env, opciones.host)) {
-    return createTransport({ ...opciones, requireTLS: false, ignoreTLS: true }); // NOSONAR: solo Mailpit local, validado arriba
+  const { host, port, secure, auth } = opcionesSmtp(env);
+  if (permiteSmtpSinTls(env, host)) {
+    return createTransport({ host, port, secure: false, ignoreTLS: true }); // NOSONAR: solo Mailpit local, validado arriba
   }
-  return createTransport(opciones);
+  return createTransport({ host, port, secure, requireTLS: true, auth });
 }
 
+// SMTP_URL apunta a Mailpit en desarrollo; sin SMTP_URL los mensajes se descartan.
 export function mailerDesdeEntorno(env: Entorno = process.env): Mailer {
+  if (!env.SMTP_URL) return { enviar: async () => undefined };
   const transporte = transporteDesdeEntorno(env);
   const from = env.MAIL_FROM ?? 'Cuestionarios en Vivo <no-responder@espe.edu.ec>';
   return { enviar: async ({ para, asunto, texto }) => void (await transporte.sendMail({ from, to: para, subject: asunto, text: texto })) };
