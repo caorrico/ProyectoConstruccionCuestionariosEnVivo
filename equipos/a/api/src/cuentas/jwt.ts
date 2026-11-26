@@ -1,4 +1,4 @@
-import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject, randomUUID, sign } from 'node:crypto';
+import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject, randomUUID, sign, verify } from 'node:crypto';
 
 // Firma de JWT RS256 para el contrato v1 (JWKS en GET /api/v1/auth/jwks).
 // La llave privada llega por JWT_PRIVATE_KEY (PEM); en desarrollo se genera una efímera.
@@ -10,6 +10,7 @@ const b64 = (valor: unknown) => Buffer.from(JSON.stringify(valor)).toString('bas
 
 export class FirmadorJwt {
   readonly jwk: Record<string, string>;
+  private readonly publica: KeyObject;
 
   constructor(
     private readonly llave: KeyObject,
@@ -17,7 +18,8 @@ export class FirmadorJwt {
     readonly audiencia: string[],
     readonly vidaSegundos: number,
   ) {
-    const { kty, n, e } = createPublicKey(llave).export({ format: 'jwk' }) as Record<string, string>;
+    this.publica = createPublicKey(llave);
+    const { kty, n, e } = this.publica.export({ format: 'jwk' }) as Record<string, string>;
     // kid = huella RFC 7638 de la llave pública: estable mientras la llave no cambie.
     const kid = createHash('sha256').update(JSON.stringify({ e, kty, n })).digest('base64url');
     this.jwk = { kty, n, e, kid, use: 'sig', alg: 'RS256' };
@@ -29,6 +31,23 @@ export class FirmadorJwt {
     const payload = { iss: this.emisor, aud, ...claims, iat, exp: iat + this.vidaSegundos, jti: randomUUID() };
     const cuerpo = `${b64({ alg: 'RS256', typ: 'JWT', kid: this.jwk.kid })}.${b64(payload)}`;
     return `${cuerpo}.${sign('RSA-SHA256', Buffer.from(cuerpo), this.llave).toString('base64url')}`;
+  }
+
+  // Comprueba firma, kid, emisor, audiencia y vencimiento; cualquier fallo devuelve null.
+  verificar(token: string, ahora = Date.now()): ClaimsAcceso | null {
+    const [cabecera, cuerpo, firma, sobra] = token.split('.');
+    if (!firma || sobra !== undefined) return null;
+    try {
+      const { alg, kid } = JSON.parse(Buffer.from(cabecera, 'base64url').toString());
+      if (alg !== 'RS256' || kid !== this.jwk.kid) return null;
+      if (!verify('RSA-SHA256', Buffer.from(`${cabecera}.${cuerpo}`), this.publica, Buffer.from(firma, 'base64url'))) return null;
+      const c = JSON.parse(Buffer.from(cuerpo, 'base64url').toString());
+      if (c.iss !== this.emisor || ![c.aud].flat().some(a => this.audiencia.includes(a))) return null;
+      if (typeof c.exp !== 'number' || c.exp * 1000 <= ahora || typeof c.sub !== 'string') return null;
+      return { sub: c.sub, roles: c.roles, sv: c.sv };
+    } catch {
+      return null; // base64 o JSON mal formados
+    }
   }
 
   jwks = () => ({ keys: [this.jwk] });
