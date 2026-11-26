@@ -38,3 +38,7 @@ PR #3 integrado. En `equipo-b/b2-rondas` se añadió una operación interna que 
 Se añadió una operación interna que autentica al participante por hash de token, comprueba pertenencia y expulsión, valida el formato de los cinco tipos y registra como máximo una respuesta en la ronda vigente. El reloj y las fechas de PostgreSQL determinan el plazo; envíos tardíos o repetidos se rechazan. La operación aún no está conectada a rutas ni WebSocket y requiere límites de peticiones y expiración de sesión antes de exponerse.
 
 Verificado: compilación TypeScript; prueba PostgreSQL de diez envíos simultáneos del mismo participante (uno aceptado), sesión inválida, respuesta booleana inválida y envío tardío. Los cinco formatos aún requieren pruebas de integración específicas; no se probó calificación, navegador ni carga p95.
+
+## B2 — validación y moderación inicial
+
+Se añadieron pruebas de integración para formatos válidos e inválidos de los cinco tipos. Se prepararon operaciones internas para bloquear o desbloquear la sala y expulsar a un participante; la expulsión invalida su hash de sesión. Se probó la propiedad, el bloqueo y la revocación. `npm run check` pasó 6 pruebas y tres pruebas de integración con PostgreSQL pasaron. El código de moderación aún no está conectado a rutas ni a la auditoría M5 y no debe exponerse hasta completar esa integración. Continúan pendientes cierre y puntuación, sesión y reconexión, WebSocket e interfaz.
