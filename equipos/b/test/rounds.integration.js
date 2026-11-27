@@ -18,7 +18,7 @@ test('apertura concurrente usa reloj de servidor y protege propiedad y solución
   const sends=await Promise.allSettled(Array.from({length:10},()=>submitAnswer(pool,game.gameId,round.roundId,participant.token,{value:true})));
   assert.equal(sends.filter(x=>x.status==='fulfilled').length,1);
   const count=await pool.query('SELECT count(*)::int AS n FROM answers WHERE round_id=$1',[round.roundId]); assert.equal(count.rows[0].n,1);
-  const other=await pool.query('INSERT INTO participants(id,game_id,nickname,session_token_hash) VALUES(gen_random_uuid(),$1,$2,$3) RETURNING id',[game.gameId,'Tardia',require('node:crypto').createHash('sha256').update('A'.repeat(43)).digest('hex')]);
+  const other=await pool.query("INSERT INTO participants(id,game_id,nickname,session_token_hash,session_expires_at) VALUES(gen_random_uuid(),$1,$2,$3,clock_timestamp()+interval '1 hour') RETURNING id",[game.gameId,'Tardia',require('node:crypto').createHash('sha256').update('A'.repeat(43)).digest('hex')]);
   await pool.query("UPDATE rounds SET opens_at=clock_timestamp()-interval '2 seconds',closes_at=clock_timestamp()-interval '1 second' WHERE id=$1",[round.roundId]);
   await assert.rejects(submitAnswer(pool,game.gameId,round.roundId,'A'.repeat(43),{value:false}),/tardía/);
   const state=await pool.query('SELECT state,locked FROM games WHERE id=$1',[game.gameId]); assert.equal(state.rows[0].state,'QUESTION_OPEN'); assert.equal(state.rows[0].locked,true);
