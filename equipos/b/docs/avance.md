@@ -48,3 +48,7 @@ Se añadieron pruebas de integración para formatos válidos e inválidos de los
 La sesión de participante vence 12 horas después de unirse (valor inicial de desarrollo); la reanudación interna devuelve solo identificador, apodo y estado. Las respuestas y la reconexión rechazan tokens vencidos o revocados. La migración 003 invalida deliberadamente tokens anteriores sin vencimiento, por lo que sus participantes deben volver a entrar. Debe coordinarse esa transición antes de cualquier despliegue.
 
 Se verificaron compilación y 6 pruebas unitarias, y 5 pruebas de integración contra una base PostgreSQL temporal independiente: reconexión, expiración, expulsión, respuestas tardías y simultáneas, moderación, capacidad y cinco tipos. La migración se aplicó dos veces sin duplicarse. La sesión aún no se expone por rutas o WebSocket; faltan limitación de peticiones y protección del transporte antes de hacerlo.
+
+## Revisión e integración de identidad
+
+La revisión sobre main 0e7b0f6 confirmó M1 real con JWKS y acceso interno; M2 aún no implementa catálogo ni snapshot. Se agregó configuración explícita y una ruta de lectura de sesión docente en M3, además de una prueba con M1 real y base temporal. `npm run check` pasó 7 pruebas; la integración con login, firma, estado y rol efectivo pasó tras ampliar el tiempo de arranque por lentitud local. Todavía no hay rutas de juego ni frontend. Véase `docs/estado-general.md` para pasos manuales y estimación; el contrato v1 no permite invalidar anticipadamente el JWT tras cambiar la contraseña sin acuerdo con A.

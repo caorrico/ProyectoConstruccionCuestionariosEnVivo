@@ -21,7 +21,13 @@ services:
     build: ./equipos/b
     environment:
       SERVICE_NAME: m3
+      NODE_ENV: development
       DATABASE_URL: postgres://m3:${m3_PASSWORD}@postgres:5432/m3
+      A_JWKS_URL: ${A_JWKS_URL:-http://simulator-a:3000/api/v1/auth/jwks}
+      A_ACCOUNTS_URL: ${A_ACCOUNTS_URL:-http://simulator-a:3000/internal/v1/accounts}
+      A_JWT_ISSUER: ${A_JWT_ISSUER:-http://simulator-a:3000}
+      A_JWT_AUDIENCE: ${A_JWT_AUDIENCE:-cuestionarios-b}
+      A_SERVICE_TOKEN: ${SERVICE_TOKEN:?Defina SERVICE_TOKEN}
     command: ["sh", "-c", "node dist/migrate.js && node dist/main.js"]
     depends_on:
       postgres: {condition: service_healthy}
