@@ -40,6 +40,30 @@ Requisitos: RF-01, RF-02, RF-03, RF-04, RN-01, RN-02, RN-03, RN-05.
 - [x] feat(a): gestión administrativa de cuentas con auditoría — migración `003_auditoria.sql` (bitácora solo de inserción por trigger); `POST /api/v1/accounts/{id}/approve|reject|suspend|reactivate` protegidos por `AdministradorGuard` (JWT verificado, cuenta ACTIVA, `sv` igual a `version_sesion`, rol ADMINISTRADOR y CSRF de doble envío). Cambio de estado y auditoría (actor, acción, estados, motivo) en una sola sentencia; rechazar y suspender exigen motivo; suspender incrementa `version_sesion`; cada resolución se notifica por correo; SIN_VERIFICAR y transiciones inválidas dan 409. El listado de cuentas para el panel queda para el punto 16. Verificado: `npm run build` y `npm test` (43 pasan, 2 omitidas sin `DATABASE_URL`) con pool en memoria; la migración y la sentencia con CTE no se probaron contra PostgreSQL real.
 
 - [x] feat(a): consulta interna de acceso para servicios — `GET /internal/v1/accounts/{id}/access` → `{user_id, status, roles}` (formato del simulador de B), `Cache-Control: no-store`, 404 si la cuenta no existe o el id no es UUID. `ServicioGuard` exige `Authorization: Bearer <SERVICE_TOKEN>` comparando los SHA-256 con `timingSafeEqual` (tiempo constante, sin revelar el largo); falla cerrado (401) si `SERVICE_TOKEN` falta o tiene menos de 32 caracteres. Variable agregada a `compose.yml` y `.env.example`. Verificado: `npm run build` y `npm test` (48 pasan, 2 omitidas sin `DATABASE_URL`) con pool en memoria; la consulta con `array_agg` no se probó contra PostgreSQL real. Aclaración sobre `version_sesion`: el contrato solo envía el `userId`, así que esta consulta no puede rechazar un JWT con `sv` antiguo; ver pedido para B.
+- [x] test(a): pruebas de contrato de identidad — `test/fixtures/identidad-v1.json` define las cuentas activa, suspendida y pendiente con la respuesta esperada de login y de `/internal/v1/accounts/{id}/access`. `api/test/contrato-identidad.test.js` levanta M1 con esas cuentas y consume la API con una réplica de las comprobaciones de `equipos/b/src/identity.ts` (firma con el JWKS, `iss`, `aud`, `exp`, `sub` UUID, rol y `status` ACTIVA): solo la activa queda autorizada; un rol ajeno, un token de servicio erróneo o una suspensión posterior al login dejan de autorizar. Verificado: `npm run build` y `npm test` (57 pasan, 2 omitidas sin `DATABASE_URL`) con pool en memoria. La rama `equipo-b/integracion-a` de B ya probó M1 real con PostgreSQL temporal (`compose.identidad-prueba.yml`); aquí no se repitió porque no había Docker.
+
+### Texto sugerido para el PR de A2
+
+**Título:** Equipo A — corte A2: cuentas, sesión e identidad para B
+
+**Descripción:**
+
+Implementa M1 (Cuentas y acceso) según RF-01 a RF-03 y el contrato v1 de identidad con B.
+
+- Registro de docentes `POST /api/v1/auth/register` con dominio `@espe.edu.ec` y política de contraseña (RN-01, RN-02).
+- Verificación de correo con enlace de un solo uso de 24 h y reenvío; tokens guardados como SHA-256 (`002_tokens.sql`). Correo por SMTP con TLS obligatorio salvo Mailpit local.
+- Login con JWT RS256 en cookie HttpOnly (SameSite=Lax), cookie CSRF de doble envío, `GET /api/v1/auth/jwks` y logout.
+- Bloqueo de 15 min tras 5 fallos seguidos, independiente del estado (RN-04), con reloj inyectable.
+- Recuperación de contraseña con enlace de 1 h que incrementa `version_sesion`.
+- Aprobar, rechazar, suspender y reactivar cuentas verificadas con auditoría inmutable (`003_auditoria.sql`) y aviso por correo (RF-02, RN-03).
+- `GET /internal/v1/accounts/{id}/access` con `SERVICE_TOKEN` comparado en tiempo constante; falla cerrado si no está configurado.
+- Pruebas de contrato con fixtures (`equipos/a/test/fixtures/identidad-v1.json`) que consumen M1 como lo hace `equipos/b/src/identity.ts`.
+
+**Cómo probar:** `cd equipos/a/api && npm ci && npm run build && npm test` (57 pasan; 2 de esquema se omiten sin `DATABASE_URL`).
+
+**Pendiente conocido:** las migraciones y las consultas SQL se probaron con pool en memoria, no contra PostgreSQL real desde A (B sí probó login, JWKS y acceso interno con M1 real). El listado de cuentas para el panel queda para A3 (punto 16). Ver los pedidos para B sobre `SERVICE_TOKEN` y `version_sesion`.
+
+Requisitos: RF-01, RF-02, RF-03, RN-01, RN-02, RN-03, RN-04; contrato v1 (JWKS y acceso interno).
 
 ## Pedidos para el equipo B
 

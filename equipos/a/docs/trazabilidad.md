@@ -22,6 +22,7 @@ Estado: **Implementado** (hay código y prueba automática), **Parcial** (solo e
 | RF-06 vista previa con errores por pregunta | — | — | Pendiente (A3/A4) |
 | Contrato v1: JWKS | `api/src/cuentas/cuentas.module.ts` (`jwks`), `jwt.ts` | `api/test/sesion.test.js` | Implementado |
 | Contrato v1: acceso interno con token de servicio en tiempo constante | `api/src/cuentas/acceso-interno.ts` (`ServicioGuard`, `AccesoInternoController`) | `api/test/acceso-interno.test.js` | Implementado |
+| Contrato v1: identidad consumida como B (cuentas activa, suspendida y pendiente) | `test/fixtures/identidad-v1.json`; `jwt.ts`, `sesion.service.ts`, `acceso-interno.ts` | `api/test/contrato-identidad.test.js` | Implementado |
 | Contrato v1: catálogo y snapshot | — | — | Pendiente (A5) |
 | Infraestructura: migraciones únicas, ordenadas y transaccionales | `api/src/migrate.ts` (`pendingFiles`, `applyMigrations`) | `api/test/migrate.test.js` | Implementado |
 | Datos de demostración idempotentes | `api/src/seed.ts` | `api/test/seed.test.js` | Implementado |
