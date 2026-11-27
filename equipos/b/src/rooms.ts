@@ -32,7 +32,7 @@ export async function joinRoom(pool: Pool, pin: string, nickname: unknown): Prom
   const count=await client.query('SELECT count(*)::int AS n FROM participants WHERE game_id=$1 AND expelled_at IS NULL',[game.id]);
   if(count.rows[0].n>=30) throw new RoomError('La sala está llena');
   const participantId=randomUUID(), token=randomBytes(32).toString('base64url');
-  await client.query('INSERT INTO participants(id,game_id,nickname,session_token_hash) VALUES($1,$2,$3,$4)',[participantId,game.id,nickname,hashToken(token)]);
+  await client.query("INSERT INTO participants(id,game_id,nickname,session_token_hash,session_expires_at) VALUES($1,$2,$3,$4,clock_timestamp()+interval '12 hours')",[participantId,game.id,nickname,hashToken(token)]);
   await client.query('COMMIT'); return {participantId,gameId:game.id,token};
  } catch(error) {
   await client.query('ROLLBACK');
@@ -40,4 +40,31 @@ export async function joinRoom(pool: Pool, pin: string, nickname: unknown): Prom
   if(e.code==='23505' && e.constraint==='participants_nickname') throw new RoomError('El apodo ya está en uso');
   throw error;
  } finally { client.release(); }
+}
+
+/** Caller must supply a principal verified against the identity provider. */
+export async function setRoomLocked(pool: Pool, principal: Principal, gameId: string, locked: boolean): Promise<void> {
+ if(!principal.roles.includes('DOCENTE') || typeof locked!=='boolean') throw new RoomError('No autorizado');
+ const result=await pool.query("UPDATE games SET locked=$3 WHERE id=$1 AND owner_id=$2 AND state='WAITING' RETURNING id",[gameId,principal.userId,locked]);
+ if(!result.rowCount) throw new RoomError('Partida no disponible');
+}
+export async function expelParticipant(pool: Pool, principal: Principal, gameId: string, participantId: string): Promise<void> {
+ if(!principal.roles.includes('DOCENTE')) throw new RoomError('No autorizado');
+ const client=await pool.connect();
+ try {
+  await client.query('BEGIN');
+  const game=await client.query("SELECT id FROM games WHERE id=$1 AND owner_id=$2 AND state='WAITING' FOR UPDATE",[gameId,principal.userId]);
+  if(!game.rowCount) throw new RoomError('Partida no disponible');
+  const result=await client.query('UPDATE participants SET expelled_at=clock_timestamp(), session_token_hash=NULL, session_expires_at=NULL WHERE id=$1 AND game_id=$2 AND expelled_at IS NULL RETURNING id',[participantId,gameId]);
+  if(!result.rowCount) throw new RoomError('Participante no disponible');
+  await client.query('COMMIT');
+ } catch(error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
+}
+
+/** Resume with the original bearer secret; returns no snapshot, PIN or solution. */
+export async function resumeParticipant(pool: Pool, gameId: string, token: string): Promise<{participantId:string;nickname:string;state:string}> {
+ if(typeof token!=='string' || !/^[A-Za-z0-9_-]{43}$/.test(token)) throw new RoomError('Sesión no válida');
+ const result=await pool.query(`SELECT p.id,p.nickname,g.state FROM participants p JOIN games g ON g.id=p.game_id WHERE p.game_id=$1 AND p.session_token_hash=$2 AND p.expelled_at IS NULL AND p.session_expires_at>clock_timestamp()`,[gameId,hashToken(token)]);
+ if(!result.rowCount) throw new RoomError('Sesión no válida');
+ return {participantId:result.rows[0].id,nickname:result.rows[0].nickname,state:result.rows[0].state};
 }

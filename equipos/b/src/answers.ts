@@ -24,7 +24,7 @@ export async function submitAnswer(pool: Pool, gameId: string, roundId: string, 
   await client.query('BEGIN');
   const games=await client.query('SELECT id,owner_id,quiz_id,snapshot,state FROM games WHERE id=$1 FOR UPDATE',[gameId]);
   const game=games.rows[0]; if(!game || game.state!=='QUESTION_OPEN') throw new RoomError('Ronda no disponible');
-  const p=await client.query('SELECT id FROM participants WHERE game_id=$1 AND session_token_hash=$2 AND expelled_at IS NULL',[gameId,hash]);
+  const p=await client.query('SELECT id FROM participants WHERE game_id=$1 AND session_token_hash=$2 AND expelled_at IS NULL AND session_expires_at>clock_timestamp()',[gameId,hash]);
   if(!p.rowCount) throw new RoomError('Sesión no válida');
   const r=await client.query('SELECT id,question_id FROM rounds WHERE id=$1 AND game_id=$2 AND question_order=(SELECT max(question_order) FROM rounds WHERE game_id=$2)',[roundId,gameId]);
   const round=r.rows[0]; if(!round) throw new RoomError('Ronda no disponible');
