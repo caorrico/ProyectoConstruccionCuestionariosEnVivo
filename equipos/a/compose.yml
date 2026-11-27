@@ -35,6 +35,8 @@ services:
       JWT_ISSUER: ${JWT_ISSUER:-http://localhost:3001}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-cuestionarios-a,cuestionarios-b}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      # Contrato v1: credencial de /internal/v1 (mínimo 32 caracteres); sin ella esas rutas responden 401.
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-}
     command: ["sh", "-c", "node dist/migrate.js && node dist/main.js"]
     depends_on:
       postgres: {condition: service_healthy}

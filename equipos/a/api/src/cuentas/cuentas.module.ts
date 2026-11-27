@@ -1,13 +1,15 @@
 import { randomBytes } from 'node:crypto';
 import { Body, Controller, Get, Header, HttpCode, Module, Post, Res } from '@nestjs/common';
 import type { CookieOptions, Response } from 'express';
+import { AccesoInternoController, ServicioGuard } from './acceso-interno';
+import { AdministracionController, AdministracionService } from './administracion';
+import { AdministradorGuard, COOKIE_ACCESO, COOKIE_CSRF } from './autenticacion';
 import { CuentasService } from './cuentas.service';
 import { FIRMADOR, firmadorDesdeEntorno } from './jwt';
 import { LoginDto, ReenvioDto, RegistroDto, RestablecerDto, VerificacionDto } from './registro.dto';
 import { SesionService } from './sesion.service';
 
-export const COOKIE_ACCESO = 'cv_acceso';
-export const COOKIE_CSRF = 'cv_csrf';
+export { COOKIE_ACCESO, COOKIE_CSRF };
 
 // Secure solo bajo HTTPS: en desarrollo local (http) el navegador descartaría la cookie.
 const seguro = () => process.env.COOKIE_SECURE === 'true' || (process.env.APP_BASE_URL ?? '').startsWith('https://');
@@ -84,7 +86,7 @@ export class CuentasController {
 }
 
 @Module({
-  controllers: [CuentasController],
-  providers: [CuentasService, SesionService, { provide: FIRMADOR, useFactory: () => firmadorDesdeEntorno() }],
+  controllers: [CuentasController, AdministracionController, AccesoInternoController],
+  providers: [CuentasService, SesionService, AdministracionService, AdministradorGuard, ServicioGuard, { provide: FIRMADOR, useFactory: () => firmadorDesdeEntorno() }],
 })
 export class CuentasModule {}
