@@ -15,12 +15,14 @@ Estado: **Implementado** (hay código y prueba automática), **Parcial** (solo e
 | RF-03 inicio de sesión, JWT RS256 en cookie HttpOnly y JWKS | `api/src/cuentas/jwt.ts`, `sesion.service.ts`, `cuentas.module.ts` (`login`, `logout`, `jwks`) | `api/test/sesion.test.js` | Implementado |
 | RF-03 / RN-04 bloqueo de 15 min tras 5 fallos seguidos, independiente del estado | `api/src/cuentas/sesion.service.ts` (`registrarFallo`, `MAX_INTENTOS`, `BLOQUEO_MS`), `api/src/reloj.ts`; columnas `intentos_fallidos`, `bloqueado_hasta` | `api/test/bloqueo.test.js` | Implementado |
 | RF-03 recuperación de contraseña con enlace de un solo uso (1 h) | `api/src/cuentas/cuentas.service.ts` (`solicitarRecuperacion`, `restablecer`), `tokens.ts` (`RECUPERACION`), `registro.dto.ts` (`RestablecerDto`) | `api/test/recuperacion.test.js` | Implementado |
-| RF-03 / RN-04 invalidación de sesiones (`version_sesion`) | `api/migrations/m1/001_cuentas.sql` (`version_sesion`), claim `sv` en `jwt.ts`, incremento en `restablecer` y al suspender, rechazo de `sv` antiguo en `AdministradorGuard` | `api/test/recuperacion.test.js`, `api/test/administracion.test.js` | Parcial: falta rechazar `sv` antiguo en la consulta interna de acceso (A2) |
+| RF-03 / RN-04 invalidación de sesiones (`version_sesion`) | `api/migrations/m1/001_cuentas.sql` (`version_sesion`), claim `sv` en `jwt.ts`, incremento en `restablecer` y al suspender, rechazo de `sv` antiguo en `AdministradorGuard` | `api/test/recuperacion.test.js`, `api/test/administracion.test.js` | Implementado en A; en B la suspensión se ve por `status`, pero el `sv` antiguo tras un restablecimiento requiere ampliar el contrato (pedido en `avance.md`) |
 | RF-04 / RN-05 1–50 preguntas, 5–120 s, cinco tipos | `api/migrations/m2/001_cuestionarios.sql` (`preguntas`) | `api/test/schema.test.js` (M2) | Parcial: falta validación al publicar (A3) |
 | RF-04 versiones publicadas inmutables | `api/migrations/m2/001_cuestionarios.sql` (trigger `versiones_publicadas_inmutables`) | `api/test/schema.test.js` (M2) | Parcial: falta publicar (A3) |
 | RF-05 / RN-06 importación TXT, DOCX y PDF | — | — | Pendiente (A4) |
 | RF-06 vista previa con errores por pregunta | — | — | Pendiente (A3/A4) |
-| Contrato v1: JWKS, acceso interno, catálogo y snapshot | — | — | Pendiente (A2, A5) |
+| Contrato v1: JWKS | `api/src/cuentas/cuentas.module.ts` (`jwks`), `jwt.ts` | `api/test/sesion.test.js` | Implementado |
+| Contrato v1: acceso interno con token de servicio en tiempo constante | `api/src/cuentas/acceso-interno.ts` (`ServicioGuard`, `AccesoInternoController`) | `api/test/acceso-interno.test.js` | Implementado |
+| Contrato v1: catálogo y snapshot | — | — | Pendiente (A5) |
 | Infraestructura: migraciones únicas, ordenadas y transaccionales | `api/src/migrate.ts` (`pendingFiles`, `applyMigrations`) | `api/test/migrate.test.js` | Implementado |
 | Datos de demostración idempotentes | `api/src/seed.ts` | `api/test/seed.test.js` | Implementado |
 

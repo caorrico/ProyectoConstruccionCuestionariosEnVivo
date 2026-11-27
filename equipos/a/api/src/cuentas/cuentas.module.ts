@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { Body, Controller, Get, Header, HttpCode, Module, Post, Res } from '@nestjs/common';
 import type { CookieOptions, Response } from 'express';
+import { AccesoInternoController, ServicioGuard } from './acceso-interno';
 import { AdministracionController, AdministracionService } from './administracion';
 import { AdministradorGuard, COOKIE_ACCESO, COOKIE_CSRF } from './autenticacion';
 import { CuentasService } from './cuentas.service';
@@ -85,7 +86,7 @@ export class CuentasController {
 }
 
 @Module({
-  controllers: [CuentasController, AdministracionController],
-  providers: [CuentasService, SesionService, AdministracionService, AdministradorGuard, { provide: FIRMADOR, useFactory: () => firmadorDesdeEntorno() }],
+  controllers: [CuentasController, AdministracionController, AccesoInternoController],
+  providers: [CuentasService, SesionService, AdministracionService, AdministradorGuard, ServicioGuard, { provide: FIRMADOR, useFactory: () => firmadorDesdeEntorno() }],
 })
 export class CuentasModule {}
