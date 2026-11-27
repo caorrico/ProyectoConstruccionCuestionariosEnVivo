@@ -25,9 +25,16 @@ services:
       SERVICE_NAME: m1
       DATABASE_URL: postgres://m1:${m1_PASSWORD}@postgres:5432/m1
       SMTP_URL: smtp://mailpit:1025
+      # Mailpit local no tiene TLS; fuera de desarrollo se exige STARTTLS o smtps://.
+      SMTP_SIN_TLS: "true"
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3100}
       SEED_DEMO: ${SEED_DEMO:-false}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       SEED_DOCENTE_PASSWORD: ${SEED_DOCENTE_PASSWORD:-}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:3001}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-cuestionarios-a,cuestionarios-b}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     command: ["sh", "-c", "node dist/migrate.js && node dist/main.js"]
     depends_on:
       postgres: {condition: service_healthy}
